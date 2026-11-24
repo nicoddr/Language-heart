@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>I Love You — Across Every Language</title>
+  <style>
+    :root {
+      --bg: #060606;
+      --font-global:
+        "Segoe UI", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", "Noto Sans", "Liberation Sans",
+        "PingFang SC", "Hiragino Sans", "Microsoft YaHei", "Meiryo", "Malgun Gothic",
+        "Apple SD Gothic Neo", "Segoe UI Historic", "Segoe UI Symbol",
+        "Nirmala UI", "Leelawadee UI", "Ebrima", "Sylfaen", "Gadugi",
+        "Geeza Pro", "Arial Hebrew", "Tahoma", "Arial Unicode MS", sans-serif;
+      --accent-hot: #ffffff;
+      --accent-warm: #ffab91;
+      --accent-glow: #ff5722;
+      --tooltip-bg: rgba(14, 10, 9, 0.92);
+      --tooltip-border: rgba(255, 110, 64, 0.48);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: #ff6e40;
+      font-family: var(--font-global);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(
+          ellipse 56% 52% at 50% 48%,
+          rgba(255, 61, 0, 0.085) 0%,
+          rgba(230, 74, 25, 0.035) 42%,
+          rgba(6, 6, 6, 0) 74%
+        ),
+        #060606;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      cursor: pointer;
+    }
+
+    .heart-scaler {
+      position: relative;
+      width: var(--stage-w, 860px);
+      height: var(--stage-h, 760px);
+      flex: 0 0 auto;
+      transform-origin: center center;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    .heart-pulse {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-origin: var(--cx, 430px) var(--cy, 350px);
+      will-change: transform;
+    }
+
+    .heart-pulse.is-assembled {
+      animation: heartbeat 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% {
+        transform: scale(1);
+      }
+      14% {
+        transform: scale(1.024);
+      }
+      26% {
+        transform: scale(1.003);
+      }
+      38% {
+        transform: scale(1.015);
+      }
+      55% {
+        transform: scale(1);
+      }
+    }
+
+    .heart-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .phrase {
+      position: absolute;
+      white-space: nowrap;
+      line-height: 1.15;
+      unicode-bidi: isolate;
+      cursor: pointer;
+      pointer-events: auto;
+      outline: none;
+      opacity: 0;
+      transform: translate3d(var(--ix, 0px), var(--iy, 0px), 0) rotate(var(--ir, 0deg)) scale(0.45);
+      transition:
+        transform 2200ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform, opacity;
+    }
+
+    .phrase.is-in {
+      opacity: var(--op, 0.9);
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+
+    .phrase.is-active {
+      z-index: 40;
+      opacity: 1 !important;
+    }
+
+    .phrase-inner {
+      display: inline-block;
+      color: var(--c, #ff5722);
+      text-shadow: 0 0 8px var(--glow, rgba(255, 69, 0, 0.42));
+      transform-origin: center center;
+      transition:
+        transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+        color 180ms ease,
+        text-shadow 180ms ease;
+    }
+
+    .phrase.is-active .phrase-inner,
+    .phrase:focus-visible .phrase-inner {
+      color: var(--accent-hot);
+      transform: scale(1.24);
+      text-shadow:
+        0 0 6px rgba(255, 255, 255, 0.95),
+        0 0 14px rgba(255, 171, 145, 0.95),
+        0 0 26px rgba(255, 87, 34, 0.9);
+    }
+
+    .phrase:focus-visible .phrase-inner {
+      outline: 1px solid rgba(255, 171, 145, 0.55);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+
+    .lang-tooltip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+      pointer-events: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: var(--tooltip-bg);
+      border: 1px solid var(--tooltip-border);
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.72),
+        0 0 18px rgba(255, 69, 0, 0.22);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(0.94);
+      transition: opacity 140ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+      max-width: calc(100vw - 24px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lang-tooltip.is-visible {
+      opacity: 1;
+      transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(1);
+    }
+
+    .tooltip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff6e40;
+      box-shadow: 0 0 8px #ff5722;
+      flex: 0 0 auto;
+    }
+
+    .tooltip-phrase {
+      display: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: #ffab91;
+      border-right: 1px solid rgba(255, 110, 64, 0.28);
+      padding-right: 7px;
+      max-width: 44vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tooltip-lang {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #fff3ee;
+    }
+
+    .tooltip-region {
+      font-size: 10.5px;
+      font-weight: 400;
+      color: rgba(255, 171, 145, 0.72);
+      border-left: 1px solid rgba(255, 110, 64, 0.28);
+      padding-left: 7px;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: max(14px, env(safe-area-inset-bottom, 14px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      pointer-events: none;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 171, 145, 0.34);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 700ms ease;
+    }
+
+    .hint.is-visible {
+      opacity: 1;
+    }
+
+    .measure-bin {
+      position: fixed;
+      left: -9999px;
+      top: -9999px;
+      visibility: hidden;
+      pointer-events: none;
+      white-space: nowrap;
+      font-family: var(--font-global);
+    }
+
+    @media (pointer: coarse), (max-width: 640px) {
+      .tooltip-phrase {
+        display: inline-block;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hint {
+        max-width: calc(100vw - 28px);
+        white-space: normal;
+        text-align: center;
+        line-height: 1.45;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .heart-pulse.is-assembled {
+        animation: none;
+      }
+
+      .phrase {
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+        transition: opacity 220ms ease;
+      }
+
+      .phrase-inner {
+        transition: color 120ms ease, text-shadow 120ms ease;
+      }
+
+      .phrase.is-active .phrase-inner,
+      .phrase:focus-visible .phrase-inner {
+        transform: scale(1.1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="viewport" id="viewport" aria-label="Interactive typographic heart of I love you in over 130 languages. Click background or press Space or R to replay.">
+    <div class="heart-scaler" id="heart-scaler">
+      <div class="heart-pulse" id="heart-pulse">
+        <div class="heart-stage" id="heart-stage"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="lang-tooltip" id="lang-tooltip" role="status" aria-live="polite" aria-hidden="true">
+    <span class="tooltip-dot" aria-hidden="true"></span>
+    <span class="tooltip-phrase" id="tooltip-phrase"></span>
+    <span class="tooltip-lang" id="tooltip-lang"></span>
+    <span class="tooltip-region" id="tooltip-region"></span>
+  </div>
+
+  <div class="hint" id="hint"></div>
+  <div class="measure-bin" id="measure-bin" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const RAW_LANGUAGES = [
+        // Europe (37 core + 12 additional)
+        { text: "I love you", lang: "English", region: "Europe" },
+        { text: "Je t'aime", lang: "French", region: "Europe" },
+        { text: "Te amo", lang: "Spanish", region: "Europe" },
+        { text: "Ti amo", lang: "Italian", region: "Europe" },
+        { text: "Ich liebe dich", lang: "German", region: "Europe" },
+        { text: "Eu te amo", lang: "Portuguese", region: "Europe" },
+        { text: "Ik hou van jou", lang: "Dutch", region: "Europe" },
+        { text: "Jag älskar dig", lang: "Swedish", region: "Europe" },
+        { text: "Jeg elsker deg", lang: "Norwegian", region: "Europe" },
+        { text: "Jeg elsker dig", lang: "Danish", region: "Europe" },
+        { text: "Minä rakastan sinua", lang: "Finnish", region: "Europe" },
+        { text: "Ég elska þig", lang: "Icelandic", region: "Europe" },
+        { text: "Aš tave myliu", lang: "Lithuanian", region: "Europe" },
+        { text: "Es tevi mīlu", lang: "Latvian", region: "Europe" },
+        { text: "Ma armastan sind", lang: "Estonian", region: "Europe" },
+        { text: "Kocham cię", lang: "Polish", region: "Europe" },
+        { text: "Miluji tě", lang: "Czech", region: "Europe" },
+        { text: "Ľúbim ťa", lang: "Slovak", region: "Europe" },
+        { text: "Szeretlek", lang: "Hungarian", region: "Europe" },
+        { text: "Te iubesc", lang: "Romanian", region: "Europe" },
+        { text: "Обичам те", lang: "Bulgarian", region: "Europe" },
+        { text: "Volim te", lang: "Serbian/Croatian/Bosnian", region: "Europe" },
+        { text: "Ljubim te", lang: "Slovenian", region: "Europe" },
+        { text: "Я тебе кохаю", lang: "Ukrainian", region: "Europe" },
+        { text: "Я цябе кахаю", lang: "Belarusian", region: "Europe" },
+        { text: "Я тебя люблю", lang: "Russian", region: "Europe" },
+        { text: "Σ' αγαπώ", lang: "Greek", region: "Europe" },
+        { text: "Të dua", lang: "Albanian", region: "Europe" },
+        { text: "Те сакам", lang: "Macedonian", region: "Europe" },
+        { text: "Grá agam duit", lang: "Irish", region: "Europe" },
+        { text: "Tha gaol agam ort", lang: "Scottish Gaelic", region: "Europe" },
+        { text: "Rwy'n dy garu di", lang: "Welsh", region: "Europe" },
+        { text: "Maite zaitut", lang: "Basque", region: "Europe" },
+        { text: "T'estimo", lang: "Catalan", region: "Europe" },
+        { text: "Quérote", lang: "Galician", region: "Europe" },
+        { text: "Inħobbok", lang: "Maltese", region: "Europe" },
+        { text: "Ech hunn dech gär", lang: "Luxembourgish", region: "Europe" },
+        { text: "Da garout a ran", lang: "Breton", region: "Europe" },
+        { text: "Ti tengu caru", lang: "Corsican", region: "Europe" },
+        { text: "Eg elski teg", lang: "Faroese", region: "Europe" },
+        { text: "Ik hâld fan dy", lang: "West Frisian", region: "Europe" },
+        { text: "T'aimi", lang: "Occitan", region: "Europe" },
+        { text: "T'amo", lang: "Sardinian", region: "Europe" },
+        { text: "איך האָב דיך ליב", lang: "Yiddish", region: "Europe", rtl: true },
+        { text: "Mun ráhkistan du", lang: "Northern Sámi", region: "Europe" },
+        { text: "My a'th kar", lang: "Cornish", region: "Europe" },
+        { text: "Ta graih aym ort", lang: "Manx", region: "Europe" },
+        { text: "Волим те", lang: "Serbian (Cyrillic)", region: "Europe" },
+        { text: "Quiérote", lang: "Asturian", region: "Europe" },
+
+        // Asia & Middle East (36 core + 15 additional)
+        { text: "愛してる", lang: "Japanese", region: "East Asia" },
+        { text: "사랑해", lang: "Korean", region: "East Asia" },
+        { text: "我爱你", lang: "Mandarin Chinese", region: "East Asia" },
+        { text: "我愛你", lang: "Cantonese", region: "East Asia" },
+        { text: "我愛汝", lang: "Taiwanese Hokkien", region: "East Asia" },
+        { text: "Anh yêu em", lang: "Vietnamese", region: "Southeast Asia" },
+        { text: "ฉันรักเธอ", lang: "Thai", region: "Southeast Asia" },
+        { text: "ຂ້ອຍຮັກເຈົ້າ", lang: "Lao", region: "Southeast Asia" },
+        { text: "ខ្ញុំស្រលាញ់អ្នក", lang: "Khmer", region: "Southeast Asia" },
+        { text: "ချစ်တယ်", lang: "Burmese", region: "Southeast Asia" },
+        { text: "Aku cinta kamu", lang: "Indonesian", region: "Southeast Asia" },
+        { text: "Saya cinta padamu", lang: "Malay", region: "Southeast Asia" },
+        { text: "Mahal kita", lang: "Tagalog/Filipino", region: "Southeast Asia" },
+        { text: "Aku tresna sampeyan", lang: "Javanese", region: "Southeast Asia" },
+        { text: "मैं तुमसे प्यार करता हूँ", lang: "Hindi", region: "South Asia" },
+        { text: "আমি তোমায় ভালোবাসি", lang: "Bengali", region: "South Asia" },
+        { text: "میں تم سے پیار کرتا ہوں", lang: "Urdu", region: "South Asia", rtl: true },
+        { text: "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", lang: "Punjabi", region: "South Asia" },
+        { text: "நான் உன்னை காதலிக்கிறேன்", lang: "Tamil", region: "South Asia" },
+        { text: "నేను నిన్ను ప్రేమిస్తున్నాను", lang: "Telugu", region: "South Asia" },
+        { text: "मी तुझ्यावर प्रेम करतो", lang: "Marathi", region: "South Asia" },
+        { text: "હું તને પ્રેમ કરું છું", lang: "Gujarati", region: "South Asia" },
+        { text: "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", lang: "Kannada", region: "South Asia" },
+        { text: "ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", lang: "Malayalam", region: "South Asia" },
+        { text: "මම ඔයාට ආදරෙයි", lang: "Sinhala", region: "South Asia" },
+        { text: "म तिमीलाई माया गर्छु", lang: "Nepali", region: "South Asia" },
+        { text: "دوستت دارم", lang: "Persian/Farsi", region: "Middle East", rtl: true },
+        { text: "أحبك", lang: "Arabic", region: "Middle East", rtl: true },
+        { text: "אני אוהב אותך", lang: "Hebrew", region: "Middle East", rtl: true },
+        { text: "Seni seviyorum", lang: "Turkish", region: "West Asia" },
+        { text: "Mən səni sevirəm", lang: "Azerbaijani", region: "Caucasus" },
+        { text: "მიყვარხარ", lang: "Georgian", region: "Caucasus" },
+        { text: "Ես քեզ սիրում եմ", lang: "Armenian", region: "Caucasus" },
+        { text: "Мен сені жақсы көремін", lang: "Kazakh", region: "Central Asia" },
+        { text: "Men seni sevaman", lang: "Uzbek", region: "Central Asia" },
+        { text: "Би чамд хайртай", lang: "Mongolian", region: "East Asia" },
+        { text: "Ez ji te hez dikim", lang: "Kurdish", region: "Middle East" },
+        { text: "زه تا سره مینه لرم", lang: "Pashto", region: "South/Central Asia", rtl: true },
+        { text: "Ман туро дӯст медорам", lang: "Tajik", region: "Central Asia" },
+        { text: "Мен сени сүйөм", lang: "Kyrgyz", region: "Central Asia" },
+        { text: "Men seni söýýärin", lang: "Turkmen", region: "Central Asia" },
+        { text: "مەن سىزنى ياخشى كۆرىمەن", lang: "Uyghur", region: "Central Asia", rtl: true },
+        { text: "ང་ཁྱེད་རང་ལ་དགའ་པོ་ཡོད།", lang: "Tibetan", region: "East Asia" },
+        { text: "ମୁଁ ତୁମକୁ ଭଲପାଏ", lang: "Odia", region: "South Asia" },
+        { text: "মই তোমাক ভাল পাওঁ", lang: "Assamese", region: "South Asia" },
+        { text: "مان توسان پيار ڪريان ٿو", lang: "Sindhi", region: "South Asia", rtl: true },
+        { text: "Gihigugma ko ikaw", lang: "Cebuano", region: "Southeast Asia" },
+        { text: "Ay-ayaten ka", lang: "Ilocano", region: "Southeast Asia" },
+        { text: "Abdi bogoh ka anjeun", lang: "Sundanese", region: "Southeast Asia" },
+        { text: "Kuv hlub koj", lang: "Hmong", region: "Southeast Asia" },
+        { text: "Мин сине яратам", lang: "Tatar", region: "Eurasia" },
+
+        // Africa (14 core + 12 additional)
+        { text: "Nakupenda", lang: "Swahili", region: "Africa" },
+        { text: "እወድሻለሁ", lang: "Amharic", region: "Africa" },
+        { text: "Mo nifẹ rẹ", lang: "Yoruba", region: "Africa" },
+        { text: "A hụrụ m gị n'anya", lang: "Igbo", region: "Africa" },
+        { text: "Ina son ka", lang: "Hausa", region: "Africa" },
+        { text: "Ngiyakuthanda", lang: "Zulu", region: "Africa" },
+        { text: "Ndiyakuthanda", lang: "Xhosa", region: "Africa" },
+        { text: "Ek het jou lief", lang: "Afrikaans", region: "Africa" },
+        { text: "Waan ku jeclahay", lang: "Somali", region: "Africa" },
+        { text: "Tiako ianao", lang: "Malagasy", region: "Africa" },
+        { text: "Ndinokuda", lang: "Shona", region: "Africa" },
+        { text: "Nob naa la", lang: "Wolof", region: "Africa" },
+        { text: "Me dɔ wo", lang: "Twi", region: "Africa" },
+        { text: "Ndagukunda", lang: "Kinyarwanda", region: "Africa" },
+        { text: "የፍቅረካ እየ", lang: "Tigrinya", region: "Africa" },
+        { text: "Sin jaalladha", lang: "Oromo", region: "Africa" },
+        { text: "Ndimakukonda", lang: "Chichewa", region: "Africa" },
+        { text: "Nalingi yo", lang: "Lingala", region: "Africa" },
+        { text: "Nkwagala", lang: "Luganda", region: "Africa" },
+        { text: "Ke a o rata", lang: "Sesotho", region: "Africa" },
+        { text: "Ke a go rata", lang: "Setswana", region: "Africa" },
+        { text: "N b'i fɛ", lang: "Bambara", region: "Africa" },
+        { text: "Melɔ̃ wò", lang: "Ewe", region: "Africa" },
+        { text: "Ḥemmleɣ-k", lang: "Kabyle", region: "Africa" },
+        { text: "Miɗo yiɗi ma", lang: "Fulfulde", region: "Africa" },
+        { text: "Ndza ku rhandza", lang: "Tsonga", region: "Africa" },
+
+        // Americas, Oceania & Constructed/Indigenous (13 core + 12 additional)
+        { text: "Aloha wau iā ʻoe", lang: "Hawaiian", region: "Oceania" },
+        { text: "Aroha ahau ki a koe", lang: "Māori", region: "Oceania" },
+        { text: "Ou te alofa ia te oe", lang: "Samoan", region: "Oceania" },
+        { text: "Ua here vau ia oe", lang: "Tahitian", region: "Oceania" },
+        { text: "Au domoni iko", lang: "Fijian", region: "Oceania" },
+        { text: "Kuyayki", lang: "Quechua", region: "Americas" },
+        { text: "Rohayhu", lang: "Guaraní", region: "Americas" },
+        { text: "Nimitztlazohtla", lang: "Nahuatl", region: "Americas" },
+        { text: "Ayóó ánííníshní", lang: "Navajo", region: "Americas" },
+        { text: "ᎬᎨᏳᎢ", lang: "Cherokee", region: "Americas" },
+        { text: "Mwen renmen ou", lang: "Haitian Creole", region: "Americas" },
+        { text: "Mi amas vin", lang: "Esperanto", region: "Constructed" },
+        { text: "Te amo", lang: "Latin", region: "Classical" },
+        { text: "ʻOku ou ʻofa atu", lang: "Tongan", region: "Oceania" },
+        { text: "Hu guaiya hao", lang: "Chamorro", region: "Oceania" },
+        { text: "Asavakkit", lang: "Greenlandic", region: "Arctic" },
+        { text: "ᓇᒡᓕᒋᕙᒋᑦ", lang: "Inuktitut", region: "Arctic" },
+        { text: "Kisâkihitin", lang: "Cree", region: "Americas" },
+        { text: "Gizaagi'in", lang: "Ojibwe", region: "Americas" },
+        { text: "Techíȟila", lang: "Lakota", region: "Americas" },
+        { text: "Piwkeyeyu", lang: "Mapudungun", region: "Americas" },
+        { text: "Munasmawa", lang: "Aymara", region: "Americas" },
+        { text: "Mi stima bo", lang: "Papiamento", region: "Americas" },
+        { text: "Mi lavim yu", lang: "Tok Pisin", region: "Oceania" },
+        { text: "Io te ama", lang: "Interlingua", region: "Constructed" }
+      ];
+
+      // Deduplicate by language name
+      const LANGUAGES = (() => {
+        const seen = new Set();
+        const out = [];
+        for (const item of RAW_LANGUAGES) {
+          const key = item.lang.trim().toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            out.push(item);
+          }
+        }
+        return out;
+      })();
+
+      const PALETTE = [
+        { color: "#ff4500", glow: "rgba(255, 69, 0, 0.45)" },
+        { color: "#ff5722", glow: "rgba(255, 87, 34, 0.45)" },
+        { color: "#ff6e40", glow: "rgba(255, 110, 64, 0.48)" },
+        { color: "#e64a19", glow: "rgba(230, 74, 25, 0.42)" },
+        { color: "#ff3d00", glow: "rgba(255, 61, 0, 0.46)" },
+        { color: "#ff7043", glow: "rgba(255, 112, 67, 0.44)" },
+        { color: "#d84315", glow: "rgba(216, 67, 21, 0.40)" }
+      ];
+
+      const viewportEl = document.getElementById("viewport");
+      const scalerEl = document.getElementById("heart-scaler");
+      const pulseEl = document.getElementById("heart-pulse");
+      const stageEl = document.getElementById("heart-stage");
+      const tooltipEl = document.getElementById("lang-tooltip");
+      const tooltipPhraseEl = document.getElementById("tooltip-phrase");
+      const tooltipLangEl = document.getElementById("tooltip-lang");
+      const tooltipRegionEl = document.getElementById("tooltip-region");
+      const hintEl = document.getElementById("hint");
+      const measureBinEl = document.getElementById("measure-bin");
+
+      const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+
+      let currentRunId = 0;
+      let pendingTimers = [];
+      let activePhraseEl = null;
+      let currentScale = 1;
+      let activeProfile = null;
+      let activePoly = null;
+      let resizeTimer = null;
+
+      // Touch exploration & tap-vs-drag state
+      let touchPointerId = null;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let isTouchDragging = false;
+      let lastTouchHandledAt = 0;
+
+      function getViewportSize() {
+        const vv = window.visualViewport;
+        return {
+          vw: vv ? vv.width : window.innerWidth,
+          vh: vv ? vv.height : window.innerHeight
+        };
+      }
+
+      function getLayoutProfile() {
+        const { vw, vh } = getViewportSize();
+        if (vw <= 640 && vh > vw) {
+          return {
+            mode: "mobile",
+            stageW: 660,
+            stageH: 680,
+            cx: 330,
+            cy: 304,
+            scaleX: 19.6,
+            scaleY: 20.6,
+            rowPitch: 17.6,
+            minGap: 7,
+            fitW: 636,
+            fitH: 640,
+            tipMaxW: 58,
+            minFont: 9.0,
+            maxFont: 12.6
+          };
+        }
+        return {
+          mode: "desktop",
+          stageW: 860,
+          stageH: 760,
+          cx: 430,
+          cy: 338,
+          scaleX: 24.4,
+          scaleY: 23.6,
+          rowPitch: 18.6,
+          minGap: 9,
+          fitW: 820,
+          fitH: 730,
+          tipMaxW: 68,
+          minFont: 9.5,
+          maxFont: 14.0
+        };
+      }
+
+      function clearPendingTimers() {
+        for (const id of pendingTimers) {
+          clearTimeout(id);
+        }
+        pendingTimers = [];
+      }
+
+      function shuffle(arr) {
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const tmp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = tmp;
+        }
+        return copy;
+      }
+
+      // Parametric heart polygon sampled densely for exact horizontal scanline intersections
+      function buildHeartPolygon(profile, samples = 2000) {
+        const pts = new Array(samples);
+        let minY = Infinity;
+        let maxY = -Infinity;
+
+        for (let i = 0; i < samples; i++) {
+          const t = (i / samples) * Math.PI * 2;
+          const sinT = Math.sin(t);
+          const hx = 16 * sinT * sinT * sinT;
+          const hy = -(
+            13 * Math.cos(t) -
+            5 * Math.cos(2 * t) -
+            2 * Math.cos(3 * t) -
+            Math.cos(4 * t)
+          );
+          const x = profile.cx + hx * profile.scaleX;
+          const y = profile.cy + hy * profile.scaleY;
+          pts[i] = { x, y };
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+
+        return { pts, minY, maxY };
+      }
+
+      function scanlineIntervals(poly, y) {
+        const xs = [];
+        const pts = poly.pts;
+        const n = pts.length;
+
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+          const yi = pts[i].y;
+          const yj = pts[j].y;
+          if ((yi <= y && yj > y) || (yj <= y && yi > y)) {
+            const x = pts[i].x + ((y - yi) * (pts[j].x - pts[i].x)) / (yj - yi);
+            xs.push(x);
+          }
+        }
+
+        xs.sort((a, b) => a - b);
+        const intervals = [];
+        for (let k = 0; k + 1 < xs.length; k += 2) {
+          const xL = xs[k];
+          const xR = xs[k + 1];
+          if (xR - xL >= 18) {
+            intervals.push({ xL, xR });
+          }
+        }
+        return intervals;
+      }
+
+      function buildHeartRows(poly, rowPitch) {
+        const startY = poly.minY + 11;
+        const endY = poly.maxY - 14;
+        const rows = [];
+
+        for (let y = startY; y <= endY - rowPitch * 0.55; y += rowPitch) {
+          const intervals = scanlineIntervals(poly, y);
+          if (intervals.length > 0) {
+            rows.push({ y, intervals });
+          }
+        }
+
+        return rows;
+      }
+
+      function measureLanguages(profile) {
+        measureBinEl.innerHTML = "";
+        const nodes = [];
+        const items = LANGUAGES.map((entry) => {
+          const len = entry.text.length;
+          let minSize = profile.minFont;
+          let maxSize = profile.maxFont;
+          if (len > 20) {
+            minSize = Math.max(8.6, profile.minFont - 0.5);
+            maxSize = Math.max(10.0, profile.maxFont - 3.0);
+          } else if (len > 14) {
+            minSize = Math.max(8.8, profile.minFont - 0.2);
+            maxSize = Math.max(11.0, profile.maxFont - 1.6);
+          }
+          const fontSize = +(minSize + Math.random() * (maxSize - minSize)).toFixed(2);
+          const weights = [400, 500, 600];
+          const fontWeight = weights[Math.floor(Math.random() * weights.length)];
+
+          const span = document.createElement("span");
+          span.textContent = entry.text;
+          span.dir = entry.rtl ? "rtl" : "ltr";
+          span.style.fontSize = `${fontSize}px`;
+          span.style.fontWeight = String(fontWeight);
+          measureBinEl.appendChild(span);
+          nodes.push(span);
+
+          return {
+            ...entry,
+            fontSize,
+            fontWeight,
+            width: 0
+          };
+        });
+
+        for (let i = 0; i < items.length; i++) {
+          items[i].width = Math.ceil(nodes[i].getBoundingClientRect().width);
+        }
+        measureBinEl.innerHTML = "";
+        return items;
+      }
+
+      function packHeart(poly, measuredItems, rowPitch, profile) {
+        const rows = buildHeartRows(poly, rowPitch);
+        const unused = shuffle(measuredItems);
+        let refill = shuffle(measuredItems);
+        const placements = [];
+        const minGap = profile.minGap;
+        let lastRowY = poly.minY + 11;
+
+        function takeFromRefill(maxWidth, disallowSet) {
+          if (refill.length === 0) {
+            refill = shuffle(measuredItems);
+          }
+
+          for (let i = 0; i < refill.length; i++) {
+            const candidate = refill[i];
+            if (candidate.width <= maxWidth && (!disallowSet || !disallowSet.has(candidate.lang))) {
+              return refill.splice(i, 1)[0];
+            }
+          }
+
+          for (let i = 0; i < refill.length; i++) {
+            if (refill[i].width <= maxWidth) {
+              return refill.splice(i, 1)[0];
+            }
+          }
+          return null;
+        }
+
+        function takeNext(maxWidth, disallowSet, allowRefillFallback = false) {
+          // Always prioritize unused languages first so 100% of LANGUAGES appear
+          for (let i = 0; i < unused.length; i++) {
+            if (unused[i].width <= maxWidth) {
+              return unused.splice(i, 1)[0];
+            }
+          }
+
+          if (unused.length > 0 && !allowRefillFallback) {
+            return null;
+          }
+
+          return takeFromRefill(maxWidth, disallowSet);
+        }
+
+        for (const row of rows) {
+          let rowPlaced = false;
+          for (const interval of row.intervals) {
+            const intervalW = interval.xR - interval.xL;
+            const chosen = [];
+            const rowLangs = new Set();
+            let usedW = 0;
+
+            while (true) {
+              const neededGap = chosen.length > 0 ? minGap : 0;
+              const remaining = intervalW - usedW - neededGap;
+              if (remaining < 16) break;
+
+              const picked = takeNext(remaining, rowLangs, false);
+              if (!picked) break;
+
+              chosen.push(picked);
+              rowLangs.add(picked.lang);
+              usedW += neededGap + picked.width;
+            }
+
+            // If an interval was very narrow (upper lobe crown or lower taper) and nothing fit,
+            // allow one centered short phrase (with refill fallback if needed) so taper rows never drop out.
+            if (chosen.length === 0 && intervalW >= 24) {
+              const picked = takeNext(intervalW + 6, null, true);
+              if (picked) {
+                chosen.push(picked);
+              }
+            }
+
+            if (chosen.length === 0) continue;
+            rowPlaced = true;
+
+            if (chosen.length === 1) {
+              const item = chosen[0];
+              const x = (interval.xL + interval.xR) / 2 - item.width / 2;
+              placements.push({
+                item,
+                x,
+                y: row.y - item.fontSize * 0.58
+              });
+            } else {
+              const totalTextW = chosen.reduce((acc, it) => acc + it.width, 0);
+              const idealGap = (intervalW - totalTextW) / (chosen.length - 1);
+              let cursorX = interval.xL;
+              let gap = idealGap;
+
+              if (idealGap > 24) {
+                gap = 16;
+                const packedW = totalTextW + gap * (chosen.length - 1);
+                cursorX = interval.xL + (intervalW - packedW) / 2;
+              }
+
+              for (const item of chosen) {
+                placements.push({
+                  item,
+                  x: cursorX,
+                  y: row.y - item.fontSize * 0.58
+                });
+                cursorX += item.width + gap;
+              }
+            }
+          }
+          if (rowPlaced) {
+            lastRowY = row.y;
+          }
+        }
+
+        // Sharp single-word apex tip placed cleanly at exact rowPitch below the final body row
+        const tipY = Math.min(poly.maxY - 6, lastRowY + rowPitch);
+        const tipMaxW = profile.tipMaxW;
+        let tipItem = null;
+        for (let i = 0; i < unused.length; i++) {
+          if (unused[i].width <= tipMaxW) {
+            tipItem = unused.splice(i, 1)[0];
+            break;
+          }
+        }
+        if (!tipItem) {
+          const shortPool = measuredItems.filter((m) => m.width <= tipMaxW);
+          tipItem = shortPool[Math.floor(Math.random() * shortPool.length)] || measuredItems[0];
+        }
+        placements.push({
+          item: tipItem,
+          x: profile.cx - tipItem.width / 2,
+          y: tipY - tipItem.fontSize * 0.58
+        });
+
+        return { placements, remainingUnused: unused.length };
+      }
+
+      function updateViewportScale(profile) {
+        const p = profile || activeProfile || getLayoutProfile();
+        const { vw, vh } = getViewportSize();
+        const padX = vw <= 640 ? 14 : 48;
+        const padY = vh <= 460 ? 44 : (vw <= 640 ? 84 : 64);
+
+        scalerEl.style.setProperty("--stage-w", `${p.stageW}px`);
+        scalerEl.style.setProperty("--stage-h", `${p.stageH}px`);
+        pulseEl.style.setProperty("--cx", `${p.cx}px`);
+        pulseEl.style.setProperty("--cy", `${Math.round(p.cy + 12)}px`);
+
+        const scale = Math.min((vw - padX) / p.fitW, (vh - padY) / p.fitH);
+        currentScale = Math.max(0.2, scale);
+        scalerEl.style.transform = `scale(${currentScale.toFixed(4)})`;
+      }
+
+      function hideTooltip() {
+        if (activePhraseEl) {
+          activePhraseEl.classList.remove("is-active");
+          activePhraseEl = null;
+        }
+        tooltipEl.classList.remove("is-visible");
+        tooltipEl.setAttribute("aria-hidden", "true");
+      }
+
+      function showTooltipFor(phraseEl, isTouch = false) {
+        if (activePhraseEl && activePhraseEl !== phraseEl) {
+          activePhraseEl.classList.remove("is-active");
+        }
+        activePhraseEl = phraseEl;
+        phraseEl.classList.add("is-active");
+
+        tooltipPhraseEl.textContent = phraseEl.dataset.text || "";
+        tooltipLangEl.textContent = phraseEl.dataset.lang;
+        tooltipRegionEl.textContent = phraseEl.dataset.region;
+        tooltipEl.setAttribute("aria-hidden", "false");
+        tooltipEl.classList.add("is-visible");
+
+        const { vw, vh } = getViewportSize();
+        const rect = phraseEl.getBoundingClientRect();
+        const tipRect = tooltipEl.getBoundingClientRect();
+        const margin = 12;
+        const offsetY = isTouch ? 26 : 10;
+
+        let tx = rect.left + rect.width / 2 - tipRect.width / 2;
+        tx = Math.max(margin, Math.min(vw - tipRect.width - margin, tx));
+
+        let ty = rect.top - tipRect.height - offsetY;
+        if (ty < margin) {
+          ty = rect.bottom + (isTouch ? 18 : 10);
+        }
+        ty = Math.min(vh - tipRect.height - margin, ty);
+
+        tooltipEl.style.setProperty("--tx", `${Math.round(tx)}px`);
+        tooltipEl.style.setProperty("--ty", `${Math.round(ty)}px`);
+      }
+
+      function findNearestPhrase(clientX, clientY, maxDistPx) {
+        const phrases = stageEl.children;
+        let best = null;
+        let bestDist = maxDistPx;
+
+        for (let i = 0; i < phrases.length; i++) {
+          const el = phrases[i];
+          const r = el.getBoundingClientRect();
+          const dx = clientX < r.left ? r.left - clientX : (clientX > r.right ? clientX - r.right : 0);
+          const dy = clientY < r.top ? r.top - clientY : (clientY > r.bottom ? clientY - r.bottom : 0);
+          const d = Math.hypot(dx, dy);
+          if (d <= bestDist) {
+            bestDist = d;
+            best = el;
+            if (d === 0) break;
+          }
+        }
+        return best;
+      }
+
+      function updateHintCopy() {
+        const { vw } = getViewportSize();
+        const isTouchUI = coarsePointerQuery.matches || vw <= 640;
+        hintEl.textContent = isTouchUI
+          ? `${LANGUAGES.length} languages · Tap or drag a word · Tap outside to replay`
+          : `${LANGUAGES.length} languages · Hover a phrase · Click or Space to replay`;
+      }
+
+      function buildAndAnimate() {
+        currentRunId += 1;
+        const runId = currentRunId;
+
+        clearPendingTimers();
+        hideTooltip();
+        pulseEl.classList.remove("is-assembled");
+        hintEl.classList.remove("is-visible");
+        stageEl.innerHTML = "";
+
+        const profile = getLayoutProfile();
+        activeProfile = profile;
+        updateViewportScale(profile);
+        activePoly = buildHeartPolygon(profile, 2000);
+
+        const measured = measureLanguages(profile);
+        let pack = packHeart(activePoly, measured, profile.rowPitch, profile);
+        if (pack.remainingUnused > 0) {
+          pack = packHeart(activePoly, measured, profile.rowPitch - 1.2, profile);
+        }
+        if (pack.remainingUnused > 0) {
+          pack = packHeart(activePoly, measured, profile.rowPitch - 2.4, profile);
+        }
+
+        const placements = pack.placements;
+        const frag = document.createDocumentFragment();
+        const phraseEls = [];
+
+        const { vw, vh } = getViewportSize();
+        const halfDiagStage = Math.hypot(vw, vh) / (2 * Math.max(0.25, currentScale));
+
+        const minY = activePoly.minY;
+        const spanY = Math.max(1, activePoly.maxY - minY);
+        let maxDelay = 0;
+        const reduceMotion = reducedMotionQuery.matches;
+
+        for (const p of placements) {
+          const el = document.createElement("span");
+          el.className = "phrase";
+          el.dir = p.item.rtl ? "rtl" : "ltr";
+          el.tabIndex = 0;
+          el.setAttribute("role", "button");
+          el.setAttribute("aria-label", `${p.item.text} — ${p.item.lang}`);
+          el.dataset.text = p.item.text;
+          el.dataset.lang = p.item.lang;
+          el.dataset.region = p.item.region;
+
+          const tone = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+          const op = (0.70 + Math.random() * 0.30).toFixed(2);
+          const angle = Math.random() * Math.PI * 2;
+          const dist = halfDiagStage + 70 + Math.random() * 260;
+          const ix = (Math.cos(angle) * dist).toFixed(1);
+          const iy = (Math.sin(angle) * dist).toFixed(1);
+          const ir = ((Math.random() - 0.5) * 44).toFixed(1);
+
+          el.style.left = `${p.x.toFixed(1)}px`;
+          el.style.top = `${p.y.toFixed(1)}px`;
+          el.style.fontSize = `${p.item.fontSize}px`;
+          el.style.fontWeight = String(p.item.fontWeight);
+          el.style.setProperty("--c", tone.color);
+          el.style.setProperty("--glow", tone.glow);
+          el.style.setProperty("--op", op);
+          el.style.setProperty("--ix", `${ix}px`);
+          el.style.setProperty("--iy", `${iy}px`);
+          el.style.setProperty("--ir", `${ir}deg`);
+
+          const normY = Math.max(0, Math.min(1, (p.y - minY) / spanY));
+          const order = 0.22 * normY + 0.78 * Math.random();
+          const delay = reduceMotion ? Math.round(order * 320) : Math.round(order * 7600);
+          if (delay > maxDelay) maxDelay = delay;
+          el.style.transitionDelay = `${delay}ms`;
+
+          const inner = document.createElement("span");
+          inner.className = "phrase-inner";
+          inner.textContent = p.item.text;
+          el.appendChild(inner);
+
+          frag.appendChild(el);
+          phraseEls.push(el);
+        }
+
+        stageEl.appendChild(frag);
+        updateHintCopy();
+
+        // Double rAF guarantees initial off-place transform is committed before triggering entrance
+        requestAnimationFrame(() => {
+          if (runId !== currentRunId) return;
+          requestAnimationFrame(() => {
+            if (runId !== currentRunId) return;
+            for (const el of phraseEls) {
+              el.classList.add("is-in");
+            }
+          });
+        });
+
+        const settleMs = maxDelay + (reduceMotion ? 260 : 2250);
+        const settleTimer = setTimeout(() => {
+          if (runId !== currentRunId) return;
+          for (const el of phraseEls) {
+            el.style.transitionDelay = "0ms";
+            el.style.willChange = "auto";
+          }
+          pulseEl.classList.add("is-assembled");
+          hintEl.classList.add("is-visible");
+        }, settleMs);
+        pendingTimers.push(settleTimer);
+      }
+
+      // Desktop mouse hover & keyboard focus
+      stageEl.addEventListener("pointerenter", (e) => {
+        if (e.pointerType === "touch") return;
+        const phrase = e.target.closest(".phrase");
+        if (phrase) {
+          showTooltipFor(phrase, false);
+        }
+      }, true);
+
+      stageEl.addEventListener("pointerleave", (e) => {
+        if (e.pointerType === "touch") return;
+        const phrase = e.target.closest(".phrase");
+        if (phrase && phrase === activePhraseEl) {
+          hideTooltip();
+        }
+      }, true);
+
+      stageEl.addEventListener("focusin", (e) => {
+        const phrase = e.target.closest(".phrase");
+        if (phrase) {
+          showTooltipFor(phrase, coarsePointerQuery.matches);
+        }
+      });
+
+      stageEl.addEventListener("focusout", (e) => {
+        const phrase = e.target.closest(".phrase");
+        if (phrase && phrase === activePhraseEl) {
+          hideTooltip();
+        }
+      });
+
+      // Touch tap & drag-scrub exploration across the heart
+      viewportEl.addEventListener("pointerdown", (e) => {
+        if (e.pointerType !== "touch") return;
+        touchPointerId = e.pointerId;
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        isTouchDragging = false;
+        const nearest = findNearestPhrase(e.clientX, e.clientY, 18);
+        if (nearest) {
+          showTooltipFor(nearest, true);
+        }
+      });
+
+      viewportEl.addEventListener("pointermove", (e) => {
+        if (e.pointerType !== "touch" || e.pointerId !== touchPointerId) return;
+        if (!isTouchDragging && Math.hypot(e.clientX - touchStartX, e.clientY - touchStartY) > 6) {
+          isTouchDragging = true;
+        }
+        if (isTouchDragging) {
+          const nearest = findNearestPhrase(e.clientX, e.clientY, 26);
+          if (nearest) {
+            showTooltipFor(nearest, true);
+          }
+        }
+      });
+
+      viewportEl.addEventListener("pointerup", (e) => {
+        if (e.pointerType !== "touch" || e.pointerId !== touchPointerId) return;
+        touchPointerId = null;
+        lastTouchHandledAt = performance.now();
+
+        if (isTouchDragging) {
+          isTouchDragging = false;
+          return;
+        }
+
+        const directPhrase = e.target.closest(".phrase");
+        const nearest = directPhrase || findNearestPhrase(e.clientX, e.clientY, 18);
+        if (nearest) {
+          showTooltipFor(nearest, true);
+        } else {
+          // Only replay if tapped cleanly outside the heart phrases
+          const nearEdge = findNearestPhrase(e.clientX, e.clientY, 22);
+          if (!nearEdge) {
+            buildAndAnimate();
+          }
+        }
+      });
+
+      viewportEl.addEventListener("pointercancel", (e) => {
+        if (e.pointerType === "touch" && e.pointerId === touchPointerId) {
+          touchPointerId = null;
+          isTouchDragging = false;
+        }
+      });
+
+      // Desktop mouse click handling (guard against synthetic click right after touch)
+      stageEl.addEventListener("click", (e) => {
+        if (performance.now() - lastTouchHandledAt < 500) {
+          e.stopPropagation();
+          return;
+        }
+        const phrase = e.target.closest(".phrase");
+        if (phrase) {
+          e.stopPropagation();
+          showTooltipFor(phrase, false);
+        }
+      });
+
+      viewportEl.addEventListener("click", (e) => {
+        if (performance.now() - lastTouchHandledAt < 500) return;
+        if (!e.target.closest(".phrase")) {
+          buildAndAnimate();
+        }
+      });
+
+      // Spacebar or R to reshuffle and replay
+      window.addEventListener("keydown", (e) => {
+        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.code === "Space" || e.code === "KeyR") {
+          e.preventDefault();
+          buildAndAnimate();
+        } else if (e.code === "Escape") {
+          hideTooltip();
+        }
+      });
+
+      function handleViewportChange() {
+        const nextProfile = getLayoutProfile();
+        if (activeProfile && nextProfile.mode !== activeProfile.mode) {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            buildAndAnimate();
+          }, 180);
+          return;
+        }
+        updateViewportScale(nextProfile);
+        updateHintCopy();
+        if (activePhraseEl) {
+          showTooltipFor(activePhraseEl, coarsePointerQuery.matches);
+        }
+      }
+
+      window.addEventListener("resize", handleViewportChange, { passive: true });
+      window.addEventListener("orientationchange", handleViewportChange, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", handleViewportChange, { passive: true });
+      }
+
+      buildAndAnimate();
+    })();
+  </script>
+</body>
+</html>
